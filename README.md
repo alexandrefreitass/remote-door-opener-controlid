@@ -1,97 +1,189 @@
-# Remote Door Opener (Control ID)
+# Remote Door Opener ControlID
 
-<div align="center">
-  <img src="https://github.com/user-attachments/assets/d8a2c283-c018-47d1-8531-353becf035d2" alt="Tela inicial do painel de controle" width="700">
-</div>
+Aplicacao web em Python + Flask para abrir portas por meio da API de equipamentos ControlID.
 
-<div align="center">
-  <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.11">
-  <img src="https://img.shields.io/badge/Flask-2.x-black?style=for-the-badge&logo=flask" alt="Flask 2.x">
-  <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="MIT License">
-</div>
+O sistema agora permite cadastrar os dados do equipamento pela interface, sem editar codigo ou mexer em arquivos de configuracao. Os equipamentos ficam salvos em um banco SQLite local.
 
-## 📋 Visão Geral
-Aplicação web em **Python + Flask** que substitui o botão físico de um controlador **Control ID** e permite abrir a porta via navegador ou dispositivo móvel.  
-Foi criada após a quebra do botão original, oferecendo uma solução elegante, segura e responsiva. :contentReference[oaicite:0]{index=0}
+## Funcionalidades
 
----
+- Cadastro de equipamentos ControlID pela tela.
+- Login simples para proteger o painel interno.
+- Edicao, exclusao e ativacao do equipamento que sera usado para abertura.
+- Persistencia local em SQLite.
+- Importacao inicial a partir do `config.env` quando o banco ainda esta vazio.
+- Painel de abertura com feedback de sucesso e erro.
+- Campos configuraveis: nome, localizacao, IP/host, porta, login, senha e parametros da acao.
 
-## ✨ Principais Funcionalidades
-- **Painel “command-center”** com tema _dark_, glassmorphism e gradientes  
-- **Abertura instantânea** da porta via API do Control ID  
-- **Configuração por variáveis de ambiente** (IP, login, porta etc.)  
-- **UX aprimorada**: animações, loading, partículas e confetti de sucesso  
-- **Tratamento de erros profissional** com página de troubleshooting dedicada  
-- **Design mobile-first** e totalmente responsivo :contentReference[oaicite:1]{index=1}  
+## Como rodar no Git Bash
 
----
+Modo desenvolvimento:
 
-## ⚙️ Tecnologias Utilizadas
-- **Python 3.11** + **Flask 2.x**  
-- **Requests** para chamadas HTTP  
-- **python-dotenv** para gestão de credenciais  
-- **HTML / CSS / JS Vanilla** (design system, partículas, confetti)  
-- **Control ID REST API** para comandos de abertura  
-
----
-
-## 🚀 Primeiros Passos
-
-### 1 · Clonar o repositório
-```
-git clone https://github.com/alexandrefreitass/Remote-Door-Opener-ControlID.git
-cd Remote-Door-Opener-ControlID
-```
-### 2 · Instalar dependências
-```
+```bash
+cd "/c/Users/Xandy/Downloads/Sistema ControlID/Sistema Abertura de Porta"
+source venv/Scripts/activate
 pip install -r requirements.txt
-```
-### 3 · Configurar variáveis de ambiente
-Copie **`config.env.example`** para **`config.env`** e ajuste:
-```
-DEVICE_IP=10.43.153.110
-DEVICE_LOGIN=admin
-DEVICE_PASSWORD=SuaSenhaAqui
-FLASK_PORT=5000
-```
-### 4 · Executar a aplicação
-```
 python main.py
 ```
-Acesse `http://localhost:5000` ou a porta que você definiu.
 
----
+Se o `config.env` estiver com `FLASK_PORT=80`, talvez seja necessario rodar o terminal como administrador. Para desenvolvimento local, prefira:
 
-## 🗂️ Estrutura do Projeto
+```env
+FLASK_PORT=5000
 ```
-Remote-Door-Opener-ControlID/
-├── main.py
-├── config.env # NÃO versionar em produção
-├── requirements.txt
-├── templates/ # HTML (index, sucesso, erro)
-├── static/
-│ ├── css/ # style.css, sucesso.css, erro.css
-│ └── js/ # partículas, confetti
-├── docs/ # imagens e documentação
-└── README.md
+
+Depois acesse:
+
+```text
+http://localhost:5000
 ```
----
 
-## 🔒 Boas Práticas de Segurança
-- Credenciais mantidas fora do código-fonte (`config.env`)  
-- `.gitignore` impede o commit de dados sensíveis  
-- Recomendado rodar atrás de **Nginx** ou **Apache** com HTTPS em produção.
+Login padrao:
 
----
+```text
+No pacote publico nao existe login padrao.
+No primeiro acesso, o sistema abre a tela "Primeiro acesso" para criar o usuario administrador.
+```
 
-## 🤝 Contribuições
-1. *Fork* do projeto  
-2. Crie uma *branch*: `git checkout -b feature/NovaFuncionalidade`  
-3. *Commit* das alterações  
-4. *Push* para o seu fork  
-5. Abra um **Pull Request**
+## Como rodar em producao
 
----
+Instale as dependencias:
 
-## 📄 Licença
-Distribuído sob a licença **MIT**. Veja o arquivo **LICENSE** para detalhes.
+```bash
+cd "/c/Users/Xandy/Downloads/Sistema ControlID/Sistema Abertura de Porta"
+source venv/Scripts/activate
+pip install -r requirements.txt
+```
+
+Inicie diretamente com Waitress, quando precisar diagnosticar pelo terminal:
+
+```bash
+python run_prod.py
+```
+
+Para uso normal no Windows, utilize o launcher grafico:
+
+```text
+release\ControleDeAcesso.exe
+```
+
+Ele abre uma janela com botoes para iniciar, parar e abrir o navegador. O launcher nao inicia junto com o Windows; ele so roda quando for aberto manualmente.
+Se o servidor ja estiver rodando antes de abrir o launcher, ele detecta o processo do projeto e permite parar pela propria janela.
+
+Para gerar novamente o executavel:
+
+```text
+build_launcher.bat
+```
+
+Para gerar o ZIP publico de distribuicao:
+
+```text
+build_release_zip.bat
+```
+
+O arquivo final fica em:
+
+```text
+public-release\ControleDeAcesso-v1.0.0.zip
+```
+
+Esse ZIP nao inclui `config.env`, banco SQLite, logs, `venv` ou credenciais reais.
+
+## Landing page na Hostinger
+
+A pasta `..\Landing Page\` contem uma pagina HTML pronta para upload no modo `Site PHP/HTML personalizado` da Hostinger.
+
+Estrutura esperada no servidor:
+
+```text
+public_html/
+├── index.html
+├── assets/
+│   └── logo.png
+└── downloads/
+    └── ControleDeAcesso-v1.0.0.zip
+```
+
+O botao de download da landing aponta para:
+
+```text
+downloads/ControleDeAcesso-v1.0.0.zip
+```
+
+Com a configuracao padrao, o sistema fica disponivel em:
+
+```text
+http://IP-DO-COMPUTADOR:5000
+```
+
+Para descobrir o IP do computador no Windows:
+
+```bash
+ipconfig
+```
+
+Em producao, mantenha:
+
+```env
+FLASK_HOST=0.0.0.0
+FLASK_PORT=5000
+FLASK_DEBUG=False
+WAITRESS_THREADS=4
+```
+
+## Primeiro uso
+
+1. Abra o sistema no navegador.
+2. Clique em `Gerenciar equipamentos`.
+3. Cadastre o ControlID com IP, porta, login, senha e parametros da acao.
+4. Marque `Definir como equipamento ativo`.
+5. Volte ao painel e clique em `Abrir porta`.
+
+Se ja existir um `config.env`, o primeiro equipamento sera criado automaticamente usando esses dados quando o banco SQLite ainda nao tiver nenhum cadastro.
+
+## Arquivos importantes
+
+```text
+main.py                  Aplicacao Flask, rotas, CRUD e integracao ControlID
+run_prod.py              Entrada de producao com Waitress
+launcher.py              Launcher grafico para iniciar/parar o servidor
+build_launcher.bat       Gera release/ControleDeAcesso.exe
+install_dependencies.bat Cria o venv e instala dependencias no computador do usuario
+config.env.example       Exemplo publico sem credenciais reais
+controlid_devices.db     Banco SQLite criado automaticamente em runtime
+config.env               Configuracoes do Flask e importacao inicial opcional
+templates/               Telas HTML
+static/css/              Estilos da interface
+requirements.txt         Dependencias Python
+```
+
+## Variaveis opcionais do config.env
+
+```env
+FLASK_HOST=0.0.0.0
+FLASK_PORT=5000
+FLASK_DEBUG=False
+SECRET_KEY=troque-em-producao
+DATABASE_PATH=controlid_devices.db
+APP_USERNAME=admin
+APP_PASSWORD=telecom2022
+WAITRESS_THREADS=4
+
+DEVICE_NAME=Porta Principal
+DEVICE_LOCATION=Entrada
+DEVICE_IP=10.0.0.50
+DEVICE_PORT=80
+DEVICE_LOGIN=admin
+DEVICE_PASSWORD=SuaSenha
+DEVICE_ACTION_PARAMETERS=id=65793,reason=3
+```
+
+## Producao
+
+- Use o launcher grafico ou `python run_prod.py`, nao o servidor de desenvolvimento do Flask.
+- Mantenha `FLASK_DEBUG=False`.
+- Defina uma `SECRET_KEY` forte.
+- Troque `APP_USERNAME` e `APP_PASSWORD` se o ambiente exigir outro login.
+- Proteja o acesso ao painel, pois ele abre a porta e armazena credenciais locais.
+- Rode atras de um proxy com HTTPS, como Nginx ou Apache.
+- Nao versione `config.env` nem arquivos `.db`; eles estao no `.gitignore`.

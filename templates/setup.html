@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuracao Inicial - Controle de Acesso</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <div class="app-container">
+        <main class="control-panel login-panel">
+            <header class="app-header">
+                <div class="app-logo">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo">
+                </div>
+                <h1 class="app-title">Primeiro acesso</h1>
+                <p class="app-subtitle">Crie o login administrativo desta instalacao.</p>
+            </header>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-stack">
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('setup_admin') }}" class="device-form login-form">
+                <label>
+                    Usuario administrador
+                    <input type="text" name="username" required autofocus autocomplete="username" placeholder="admin">
+                </label>
+
+                <label>
+                    Senha
+                    <input type="password" name="password" required autocomplete="new-password" placeholder="Minimo 6 caracteres">
+                </label>
+
+                <label>
+                    Confirmar senha
+                    <input type="password" name="confirm_password" required autocomplete="new-password" placeholder="Repita a senha">
+                </label>
+
+                <button type="submit" class="main-button login-button">
+                    <span class="button-text">Criar login</span>
+                </button>
+            </form>
+        </main>
+    </div>
+</body>
+</html>

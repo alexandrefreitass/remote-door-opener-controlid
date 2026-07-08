@@ -4,78 +4,90 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Controle - Abertura de Portas</title>
-    
-    <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
     <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
-    
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    
-    <!-- Scripts -->
-    <script defer src="{{ url_for('static', filename='js/pyscript.js') }}"></script>
 </head>
 
 <body>
     <div class="app-container">
-        <div class="control-panel">
-            <!-- Header com Logo -->
+        <main class="control-panel dashboard-panel">
             <header class="app-header">
                 <div class="app-logo">
-                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo COPOM" />
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo">
                 </div>
                 <h1 class="app-title">Controle de Acesso</h1>
-                <p class="app-subtitle">Sistema de abertura remota para o prédio do COPOM</p>
+                <p class="app-subtitle">Abertura remota para equipamentos ControlID</p>
             </header>
 
-            <!-- Seção de Ação Principal -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-stack">
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
             <section class="action-section">
-                <div class="status-indicator">
-                    Sistema Online - Pronto para uso
-                </div>
-                
-                <form action="/mostrar" method="POST" id="accessForm">
-                    <button type="submit" class="main-button" id="accessButton">
-                        <span class="loading-spinner"></span>
-                        <span class="button-text">🚪 Abrir Porta Principal</span>
-                    </button>
-                </form>
+                {% if active_device %}
+                    <div class="status-indicator">Sistema online - pronto para uso</div>
+                    <div class="active-device-card">
+                        <span class="section-label">Equipamento ativo</span>
+                        <h2>{{ active_device.name }}</h2>
+                        <p>{{ active_device.location or "Local nao informado" }}</p>
+                        <div class="device-meta">
+                            <span>{{ active_device.device_ip }}:{{ active_device.device_port }}</span>
+                            <span>{{ active_device.device_login }}</span>
+                        </div>
+                    </div>
+
+                    <form action="{{ url_for('mostrar') }}" method="POST" id="accessForm">
+                        <button type="submit" class="main-button" id="accessButton">
+                            <span class="loading-spinner"></span>
+                            <span class="button-text">Abrir porta</span>
+                        </button>
+                    </form>
+                {% else %}
+                    <div class="empty-state">
+                        <span class="section-label">Configuracao pendente</span>
+                        <h2>Nenhum equipamento ativo</h2>
+                        <p>Cadastre um ControlID para liberar a abertura remota.</p>
+                    </div>
+                {% endif %}
             </section>
 
-            <!-- Informações Adicionais -->
             <section class="info-section">
                 <div class="info-item">
-                    <strong>Sistema:</strong> Integração com API ControlID
+                    <strong>Equipamentos cadastrados:</strong> {{ devices|length }}
                 </div>
                 <div class="info-item">
-                    <strong>Localização:</strong> Prédio Principal - Porta de Acesso
+                    <strong>Persistencia:</strong> banco local SQLite
                 </div>
                 <div class="info-item">
-                    <strong>Desenvolvido por:</strong> Seção de Telemática - COPOM-CPI-2
+                    <a class="secondary-link" href="{{ url_for('configuracoes') }}">Gerenciar equipamentos</a>
+                </div>
+                <div class="info-item">
+                    <a class="secondary-link" href="{{ url_for('logout') }}">Sair</a>
                 </div>
             </section>
-        </div>
+        </main>
     </div>
 
     <script>
-        // Sistema de feedback visual para o botão
-        document.getElementById('accessForm').addEventListener('submit', function(e) {
-            const button = document.getElementById('accessButton');
-            button.classList.add('loading');
-            button.disabled = true;
-            
-            // Simula o tempo de processamento
-            setTimeout(() => {
-                // O formulário será submetido normalmente
-            }, 100);
-        });
+        const accessForm = document.getElementById('accessForm');
+        if (accessForm) {
+            accessForm.addEventListener('submit', function() {
+                const button = document.getElementById('accessButton');
+                button.classList.add('loading');
+                button.disabled = true;
+            });
+        }
 
-        // Efeito de partículas sutil (opcional)
         function createFloatingParticle() {
             const particle = document.createElement('div');
             particle.style.cssText = `
@@ -90,15 +102,10 @@
                 top: 100vh;
                 animation: floatUp ${3 + Math.random() * 4}s linear forwards;
             `;
-            
             document.body.appendChild(particle);
-            
-            setTimeout(() => {
-                particle.remove();
-            }, 7000);
+            setTimeout(() => particle.remove(), 7000);
         }
 
-        // Adiciona estilo para animação das partículas
         const style = document.createElement('style');
         style.textContent = `
             @keyframes floatUp {
@@ -109,8 +116,6 @@
             }
         `;
         document.head.appendChild(style);
-
-        // Cria partículas ocasionalmente
         setInterval(createFloatingParticle, 3000);
     </script>
 </body>

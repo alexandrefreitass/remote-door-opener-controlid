@@ -1,6 +1,9 @@
 # Arquivos de configuração com informações sensíveis
 config.env
 .env
+*.db
+*.sqlite
+*.sqlite3
 
 # Cache do Python
 __pycache__/
@@ -18,6 +21,15 @@ Thumbs.db
 
 # Logs
 *.log
+logs/
+
+# Build do executavel
+build/
+dist/
+release/*.exe
+public-release/
+landing-page/downloads/*.zip
+*.spec
 
 # IDE
 .vscode/

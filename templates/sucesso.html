@@ -4,80 +4,58 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acesso Liberado - Painel de Controle</title>
-    
-    <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
     <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
-    
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sucesso.css') }}">
 </head>
 <body>
     <div class="success-container">
-        <!-- Ícone de Sucesso -->
         <div class="success-icon"></div>
-        
-        <!-- Título Principal -->
-        <h1 class="success-title">Acesso Liberado!</h1>
-        
-        <!-- Mensagem de Confirmação -->
+        <h1 class="success-title">Acesso liberado</h1>
         <p class="success-message">
-            A porta principal foi desbloqueada com sucesso.<br>
-            O comando foi executado e registrado no sistema.
+            O comando de abertura foi enviado com sucesso para o equipamento ativo.
         </p>
-        
-        <!-- Detalhes do Status -->
+
         <div class="status-details">
             <div class="status-item">
-                <span>Status da Operação:</span>
-                <span class="status-value">✓ Concluída</span>
+                <span>Status da operacao:</span>
+                <span class="status-value">Concluida</span>
             </div>
             <div class="status-item">
-                <span>Dispositivo:</span>
-                <span class="status-value">ControlID Principal</span>
+                <span>Equipamento:</span>
+                <span class="status-value">{{ device.name }}</span>
             </div>
             <div class="status-item">
-                <span>Horário:</span>
+                <span>Endereco:</span>
+                <span class="status-value">{{ device.device_ip }}:{{ device.device_port }}</span>
+            </div>
+            <div class="status-item">
+                <span>Horario:</span>
                 <span class="status-value" id="currentTime">--:--:--</span>
             </div>
-            <div class="status-item">
-                <span>Duração da Abertura:</span>
-                <span class="status-value">5 segundos</span>
-            </div>
         </div>
-        
-        <!-- Botão de Retorno -->
-        <a href="biometria" class="return-button">
-            ← Voltar ao Painel
-        </a>
+
+        <a href="{{ url_for('index') }}" class="return-button">Voltar ao painel</a>
     </div>
 
     <script>
-        // Atualiza o horário atual
         function updateTime() {
             const now = new Date();
-            const timeString = now.toLocaleTimeString('pt-BR', {
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('pt-BR', {
                 hour: '2-digit',
                 minute: '2-digit',
                 second: '2-digit'
             });
-            document.getElementById('currentTime').textContent = timeString;
         }
-        
-        // Atualiza o horário uma vez na carga da página
         updateTime();
-        
-        // Efeito de confetti sutil (partículas de sucesso)
+
         function createSuccessParticle() {
             const particle = document.createElement('div');
             const colors = ['#00ff88', '#00d4ff', '#ff6b35'];
             const randomColor = colors[Math.floor(Math.random() * colors.length)];
-            
             particle.style.cssText = `
                 position: fixed;
                 width: 6px;
@@ -90,15 +68,10 @@
                 top: -10px;
                 animation: confettiFall ${2 + Math.random() * 3}s linear forwards;
             `;
-            
             document.body.appendChild(particle);
-            
-            setTimeout(() => {
-                particle.remove();
-            }, 5000);
+            setTimeout(() => particle.remove(), 5000);
         }
 
-        // Adiciona estilo para animação do confetti
         const style = document.createElement('style');
         style.textContent = `
             @keyframes confettiFall {
@@ -110,16 +83,8 @@
         `;
         document.head.appendChild(style);
 
-        // Cria efeito confetti por alguns segundos
-        let confettiInterval = setInterval(createSuccessParticle, 200);
-        setTimeout(() => {
-            clearInterval(confettiInterval);
-        }, 3000);
-
-        // Auto-redirect após 10 segundos (opcional)
-        // setTimeout(() => {
-        //     window.location.href = '/biometria';
-        // }, 10000);
+        const confettiInterval = setInterval(createSuccessParticle, 200);
+        setTimeout(() => clearInterval(confettiInterval), 3000);
     </script>
 </body>
 </html>

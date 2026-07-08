@@ -336,6 +336,19 @@ body::before {
     font-style: italic;
 }
 
+.error-detail {
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-family: "Courier New", monospace;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    margin-top: 14px;
+    overflow-wrap: anywhere;
+    padding: 10px;
+}
+
 /* === BOTÕES DE AÇÃO === */
 
 .action-section {

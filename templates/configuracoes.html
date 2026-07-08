@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuracoes - Controle de Acesso</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <div class="app-container">
+        <main class="control-panel settings-panel">
+            <header class="app-header compact-header">
+                <div class="app-logo">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo">
+                </div>
+                <div>
+                    <h1 class="app-title">Equipamentos</h1>
+                    <p class="app-subtitle">Cadastre, edite, ative ou remova controladores ControlID.</p>
+                </div>
+            </header>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-stack">
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <section class="settings-grid">
+                <div class="form-card">
+                    <span class="section-label">
+                        {% if editing_device %}Editar equipamento{% else %}Novo equipamento{% endif %}
+                    </span>
+                    <form
+                        method="POST"
+                        action="{% if editing_device %}{{ url_for('atualizar_equipamento', device_id=editing_device.id) }}{% else %}{{ url_for('criar_equipamento') }}{% endif %}"
+                        class="device-form"
+                    >
+                        <label>
+                            Nome
+                            <input type="text" name="name" required value="{{ editing_device.name if editing_device else '' }}" placeholder="Porta principal">
+                        </label>
+
+                        <label>
+                            Localizacao
+                            <input type="text" name="location" value="{{ editing_device.location if editing_device else '' }}" placeholder="Entrada do predio">
+                        </label>
+
+                        <div class="form-row">
+                            <label>
+                                IP ou host
+                                <input type="text" name="device_ip" required value="{{ editing_device.device_ip if editing_device else '' }}" placeholder="10.0.0.50">
+                            </label>
+                            <label>
+                                Porta
+                                <input type="number" name="device_port" min="1" max="65535" required value="{{ editing_device.device_port if editing_device else 80 }}">
+                            </label>
+                        </div>
+
+                        <div class="form-row">
+                            <label>
+                                Login
+                                <input type="text" name="device_login" required value="{{ editing_device.device_login if editing_device else '' }}" placeholder="admin">
+                            </label>
+                            <label>
+                                Senha
+                                <input type="password" name="device_password" required value="{{ editing_device.device_password if editing_device else '' }}" autocomplete="current-password">
+                            </label>
+                        </div>
+
+                        <label>
+                            Parametros da acao
+                            <input type="text" name="action_parameters" value="{{ editing_device.action_parameters if editing_device else 'id=65793,reason=3' }}">
+                        </label>
+
+                        <label class="checkbox-line">
+                            <input type="checkbox" name="activate" value="1" {% if editing_device and editing_device.is_active %}checked{% endif %}>
+                            Definir como equipamento ativo
+                        </label>
+
+                        <div class="form-actions">
+                            <button type="submit" class="primary-action">
+                                {% if editing_device %}Salvar alteracoes{% else %}Cadastrar equipamento{% endif %}
+                            </button>
+                            {% if editing_device %}
+                                <a class="secondary-action" href="{{ url_for('configuracoes') }}">Cancelar</a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+
+                <div class="device-list">
+                    <span class="section-label">Cadastrados</span>
+                    {% if devices %}
+                        {% for device in devices %}
+                            <article class="device-item {% if device.is_active %}active{% endif %}">
+                                <div class="device-summary">
+                                    <div>
+                                        <h2>{{ device.name }}</h2>
+                                        <p>{{ device.location or "Local nao informado" }}</p>
+                                    </div>
+                                    {% if device.is_active %}
+                                        <span class="active-badge">Ativo</span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="device-meta">
+                                    <span>{{ device.device_ip }}:{{ device.device_port }}</span>
+                                    <span>{{ device.device_login }}</span>
+                                </div>
+
+                                <div class="item-actions">
+                                    {% if not device.is_active %}
+                                        <form method="POST" action="{{ url_for('ativar_equipamento', device_id=device.id) }}">
+                                            <button type="submit" class="text-action">Ativar</button>
+                                        </form>
+                                    {% endif %}
+                                    <a class="text-action" href="{{ url_for('editar_configuracao', device_id=device.id) }}">Editar</a>
+                                    <form method="POST" action="{{ url_for('excluir_equipamento', device_id=device.id) }}" onsubmit="return confirm('Excluir este equipamento?');">
+                                        <button type="submit" class="text-action danger">Excluir</button>
+                                    </form>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <h2>Nenhum equipamento cadastrado</h2>
+                            <p>Use o formulario ao lado para salvar o primeiro ControlID.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <div class="footer-actions">
+                <a class="secondary-link" href="{{ url_for('index') }}">Voltar ao painel</a>
+                <a class="secondary-link" href="{{ url_for('logout') }}">Sair</a>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
