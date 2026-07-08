@@ -64,13 +64,6 @@ if (Test-Path $landingDir) {
     $landingDownloads = Join-Path $landingDir "downloads"
     New-Item -ItemType Directory -Path $landingDownloads -Force | Out-Null
     Copy-Item -LiteralPath $zipPath -Destination (Join-Path $landingDownloads "$packageName.zip") -Force
-
-    $landingZipPath = Join-Path $releaseRoot "LandingPage-ControleDeAcesso.zip"
-    if (Test-Path $landingZipPath) {
-        Remove-Item -LiteralPath $landingZipPath -Force
-    }
-    $landingItems = Get-ChildItem -LiteralPath $landingDir -Force | Select-Object -ExpandProperty FullName
-    Compress-Archive -LiteralPath $landingItems -DestinationPath $landingZipPath -Force
 }
 
 Write-Host "ZIP criado em: $zipPath"

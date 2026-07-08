@@ -91,7 +91,7 @@ Esse ZIP nao inclui `config.env`, banco SQLite, logs, `venv` ou credenciais reai
 
 ## Landing page na Hostinger
 
-A pasta `..\Landing Page\` contem uma pagina HTML pronta para upload no modo `Site PHP/HTML personalizado` da Hostinger.
+A pasta `..\Landing Page\` contem a pagina HTML pronta para copiar diretamente para o `public_html` da Hostinger.
 
 Estrutura esperada no servidor:
 
@@ -109,6 +109,8 @@ O botao de download da landing aponta para:
 ```text
 downloads/ControleDeAcesso-v1.0.0.zip
 ```
+
+Para publicar, copie o conteudo de `..\Landing Page\` para `public_html`. Nao e necessario gerar ZIP da landing.
 
 Com a configuracao padrao, o sistema fica disponivel em:
 

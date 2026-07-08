@@ -28,7 +28,6 @@ build/
 dist/
 release/*.exe
 public-release/
-landing-page/downloads/*.zip
 *.spec
 
 # IDE
