@@ -55,7 +55,34 @@ Controle de Acesso - Instalação
 Este pacote nao inclui credenciais reais, banco SQLite ou logs.
 "@ | Set-Content -LiteralPath $packageReadme -Encoding UTF8
 
-Compress-Archive -LiteralPath $packageDir -DestinationPath $zipPath -Force
-Remove-Item -LiteralPath $packageDir -Recurse -Force
+$compressed = $false
+try {
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        try {
+            if (Test-Path $zipPath) {
+                Remove-Item -LiteralPath $zipPath -Force
+            }
+            Compress-Archive -LiteralPath $packageDir -DestinationPath $zipPath -Force
+            $compressed = $true
+            break
+        }
+        catch {
+            if ($attempt -eq 3) {
+                throw
+            }
+            Write-Warning "Arquivo temporariamente em uso. Nova tentativa em 1 segundo."
+            Start-Sleep -Seconds 1
+        }
+    }
+}
+finally {
+    if (Test-Path $packageDir) {
+        Remove-Item -LiteralPath $packageDir -Recurse -Force
+    }
+}
+
+if (-not $compressed) {
+    throw "Nao foi possivel gerar o ZIP."
+}
 
 Write-Host "ZIP criado em: $zipPath"

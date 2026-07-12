@@ -19,7 +19,7 @@ APP_TITLE = "Controle de Acesso"
 def find_project_dir():
     if getattr(sys, "frozen", False):
         exe_dir = Path(sys.executable).resolve().parent
-        candidates = [exe_dir, exe_dir.parent]
+        candidates = [exe_dir, exe_dir.parent, exe_dir.parent.parent]
     else:
         candidates = [Path(__file__).resolve().parent]
 
