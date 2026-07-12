@@ -19,7 +19,7 @@ O sistema agora permite cadastrar os dados do equipamento pela interface, sem ed
 Modo desenvolvimento:
 
 ```bash
-cd "/c/Users/Xandy/Downloads/Sistema ControlID/Sistema Abertura de Porta"
+cd "/d/Softwares/Sistemas/Sistemas/3 - Sistema ControlID/Sistema Abertura de Porta"
 source venv/Scripts/activate
 pip install -r requirements.txt
 python main.py
@@ -49,7 +49,7 @@ No primeiro acesso, o sistema abre a tela "Primeiro acesso" para criar o usuario
 Instale as dependencias:
 
 ```bash
-cd "/c/Users/Xandy/Downloads/Sistema ControlID/Sistema Abertura de Porta"
+cd "/d/Softwares/Sistemas/Sistemas/3 - Sistema ControlID/Sistema Abertura de Porta"
 source venv/Scripts/activate
 pip install -r requirements.txt
 ```
@@ -63,7 +63,7 @@ python run_prod.py
 Para uso normal no Windows, utilize o launcher grafico:
 
 ```text
-release\ControleDeAcesso.exe
+release\ControleDeAcesso\ControleDeAcesso.exe
 ```
 
 Ele abre uma janela com botoes para iniciar, parar e abrir o navegador. O launcher nao inicia junto com o Windows; ele so roda quando for aberto manualmente.
@@ -84,10 +84,10 @@ build_release_zip.bat
 O arquivo final fica em:
 
 ```text
-public-release\ControleDeAcesso-v1.0.0.zip
+public-release\ControleDeAcesso-v1.1.0.zip
 ```
 
-Esse ZIP nao inclui `config.env`, banco SQLite, logs, `venv` ou credenciais reais.
+Esse ZIP nao inclui `config.env`, banco SQLite, logs, `venv` ou credenciais reais. O build nao copia o pacote automaticamente para a landing page; ele deve ser revisado antes da publicacao.
 
 ## Landing page na Hostinger
 
@@ -101,13 +101,13 @@ public_html/
 ├── assets/
 │   └── logo.png
 └── downloads/
-    └── ControleDeAcesso-v1.0.0.zip
+    └── pacote-publicado-apos-revisao.zip
 ```
 
 O botao de download da landing aponta para:
 
 ```text
-downloads/ControleDeAcesso-v1.0.0.zip
+downloads/pacote-publicado-apos-revisao.zip
 ```
 
 Para publicar, copie o conteudo de `..\Landing Page\` para `public_html`. Nao e necessario gerar ZIP da landing.
@@ -149,7 +149,7 @@ Se ja existir um `config.env`, o primeiro equipamento sera criado automaticament
 main.py                  Aplicacao Flask, rotas, CRUD e integracao ControlID
 run_prod.py              Entrada de producao com Waitress
 launcher.py              Launcher grafico para iniciar/parar o servidor
-build_launcher.bat       Gera release/ControleDeAcesso.exe
+build_launcher.bat       Gera release/ControleDeAcesso/ControleDeAcesso.exe
 install_dependencies.bat Cria o venv e instala dependencias no computador do usuario
 config.env.example       Exemplo publico sem credenciais reais
 controlid_devices.db     Banco SQLite criado automaticamente em runtime
@@ -157,7 +157,21 @@ config.env               Configuracoes do Flask e importacao inicial opcional
 templates/               Telas HTML
 static/css/              Estilos da interface
 requirements.txt         Dependencias Python
+server.pid               Identifica a instancia em execucao; criado e removido em runtime
 ```
+
+## Build verificavel no GitHub
+
+O workflow `.github/workflows/build-windows.yml` gera o launcher, o ZIP e o arquivo SHA-256 em um runner Windows limpo. Ele pode ser executado manualmente pela aba Actions ou ao enviar uma tag `v*`.
+
+A assinatura Authenticode e opcional e exige estes segredos no repositorio:
+
+```text
+WINDOWS_CERTIFICATE_BASE64
+WINDOWS_CERTIFICATE_PASSWORD
+```
+
+Sem um certificado valido, o executavel continua funcional, mas permanece sem assinatura digital e pode receber alertas de reputacao.
 
 ## Variaveis opcionais do config.env
 

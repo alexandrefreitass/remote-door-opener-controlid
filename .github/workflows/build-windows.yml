@@ -1,0 +1,70 @@
+name: Build Windows release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+      CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pyinstaller==6.21.0
+
+      - name: Build launcher
+        shell: cmd
+        run: build_launcher.bat
+
+      - name: Sign launcher when certificate is configured
+        if: ${{ env.CERTIFICATE_BASE64 != '' }}
+        shell: pwsh
+        run: |
+          $certificatePath = Join-Path $env:RUNNER_TEMP "code-signing.pfx"
+          [IO.File]::WriteAllBytes($certificatePath, [Convert]::FromBase64String($env:CERTIFICATE_BASE64))
+          $signTool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Filter signtool.exe -Recurse |
+            Where-Object FullName -Match '\\x64\\signtool.exe$' |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1
+          if (-not $signTool) { throw "signtool.exe nao encontrado" }
+          & $signTool.FullName sign /fd SHA256 /td SHA256 /tr http://timestamp.digicert.com /f $certificatePath /p $env:CERTIFICATE_PASSWORD "release\ControleDeAcesso\ControleDeAcesso.exe"
+          Remove-Item $certificatePath -Force
+
+      - name: Build distribution package
+        shell: pwsh
+        run: ./build_release_zip.ps1
+
+      - name: Create checksum
+        shell: pwsh
+        run: |
+          Get-FileHash public-release\ControleDeAcesso-v1.1.0.zip -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  ControleDeAcesso-v1.1.0.zip" } |
+            Set-Content public-release\ControleDeAcesso-v1.1.0.zip.sha256 -Encoding ascii
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ControleDeAcesso-v1.1.0
+          path: |
+            public-release/ControleDeAcesso-v1.1.0.zip
+            public-release/ControleDeAcesso-v1.1.0.zip.sha256
+          if-no-files-found: error

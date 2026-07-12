@@ -1,10 +1,8 @@
 $ErrorActionPreference = "Stop"
 
-$version = "1.0.0"
+$version = "1.1.0"
 $appName = "ControleDeAcesso"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$workspaceRoot = Split-Path -Parent $root
-$landingDir = Join-Path $workspaceRoot "Landing Page"
 $releaseRoot = Join-Path $root "public-release"
 $packageName = "$appName-v$version"
 $packageDir = Join-Path $releaseRoot $packageName
@@ -37,12 +35,12 @@ foreach ($file in $files) {
 Copy-Item -LiteralPath (Join-Path $root "templates") -Destination $packageDir -Recurse -Force
 Copy-Item -LiteralPath (Join-Path $root "static") -Destination $packageDir -Recurse -Force
 
-$launcherExe = Join-Path $root "release\ControleDeAcesso.exe"
-if (-not (Test-Path $launcherExe)) {
-    throw "Nao encontrei release\ControleDeAcesso.exe. Rode build_launcher.bat antes."
+$launcherDir = Join-Path $root "release\ControleDeAcesso"
+if (-not (Test-Path (Join-Path $launcherDir "ControleDeAcesso.exe"))) {
+    throw "Nao encontrei release\ControleDeAcesso\ControleDeAcesso.exe. Rode build_launcher.bat antes."
 }
 
-Copy-Item -LiteralPath $launcherExe -Destination (Join-Path $packageDir "ControleDeAcesso.exe") -Force
+Copy-Item -LiteralPath $launcherDir -Destination $packageDir -Recurse -Force
 
 $packageReadme = Join-Path $packageDir "LEIA-ME.txt"
 @"
@@ -50,7 +48,7 @@ Controle de Acesso - Instalação
 
 1. Extraia este ZIP em uma pasta fixa do computador.
 2. Execute install_dependencies.bat uma vez para criar o ambiente Python local.
-3. Abra ControleDeAcesso.exe.
+3. Abra ControleDeAcesso\ControleDeAcesso.exe.
 4. No primeiro acesso, crie o usuario e senha administrativos.
 5. Cadastre o equipamento ControlID pela tela Gerenciar equipamentos.
 
@@ -59,11 +57,5 @@ Este pacote nao inclui credenciais reais, banco SQLite ou logs.
 
 Compress-Archive -LiteralPath $packageDir -DestinationPath $zipPath -Force
 Remove-Item -LiteralPath $packageDir -Recurse -Force
-
-if (Test-Path $landingDir) {
-    $landingDownloads = Join-Path $landingDir "downloads"
-    New-Item -ItemType Directory -Path $landingDownloads -Force | Out-Null
-    Copy-Item -LiteralPath $zipPath -Destination (Join-Path $landingDownloads "$packageName.zip") -Force
-}
 
 Write-Host "ZIP criado em: $zipPath"

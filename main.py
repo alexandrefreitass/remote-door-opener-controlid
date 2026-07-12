@@ -1,4 +1,4 @@
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
 import hmac
 import json
 import os
@@ -89,6 +89,7 @@ FLASK_PORT = int(os.getenv("FLASK_PORT", "5000"))
 FLASK_DEBUG = os.getenv("FLASK_DEBUG", "False") == "True"
 APP_USERNAME = os.getenv("APP_USERNAME", "").strip()
 APP_PASSWORD = os.getenv("APP_PASSWORD", "")
+APP_INSTANCE_TOKEN = os.getenv("APP_INSTANCE_TOKEN", "")
 
 
 def auth_configured():
@@ -97,7 +98,7 @@ def auth_configured():
 
 @app.before_request
 def require_login():
-    public_endpoints = {"login", "setup_admin", "static"}
+    public_endpoints = {"health", "login", "setup_admin", "static"}
     if request.endpoint in public_endpoints:
         return None
 
@@ -179,6 +180,15 @@ def logout():
     session.clear()
     flash("Sessao encerrada.", "success")
     return redirect(url_for("login"))
+
+
+@app.route("/health")
+def health():
+    return jsonify(
+        application="controle-de-acesso-controlid",
+        instance_token=APP_INSTANCE_TOKEN,
+        status="ok",
+    )
 
 
 def get_db():

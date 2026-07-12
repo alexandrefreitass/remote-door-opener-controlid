@@ -1,9 +1,13 @@
+import json
 import os
+import signal
 import socket
 import subprocess
 import sys
 import threading
 import time
+import urllib.error
+import urllib.request
 import webbrowser
 from pathlib import Path
 from tkinter import BOTH, DISABLED, NORMAL, Button, Frame, Label, Tk, messagebox
@@ -30,6 +34,7 @@ PROJECT_DIR = find_project_dir()
 CONFIG_PATH = PROJECT_DIR / "config.env"
 RUN_PROD_PATH = PROJECT_DIR / "run_prod.py"
 LOG_DIR = PROJECT_DIR / "logs"
+PID_PATH = PROJECT_DIR / "server.pid"
 
 
 def read_config():
@@ -68,114 +73,48 @@ def is_port_open(port):
         return sock.connect_ex(("127.0.0.1", port)) == 0
 
 
-def get_listening_pid(port):
+def read_server_identity():
     try:
-        output = subprocess.check_output(
-            ["netstat", "-ano", "-p", "TCP"],
-            text=True,
-            stderr=subprocess.DEVNULL,
-            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
-        )
-    except (OSError, subprocess.SubprocessError):
+        identity = json.loads(PID_PATH.read_text(encoding="utf-8"))
+        pid = int(identity["pid"])
+        instance_token = str(identity["instance_token"])
+    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
         return None
 
-    for line in output.splitlines():
-        parts = line.split()
-        if len(parts) < 5:
-            continue
-
-        local_address = parts[1]
-        state = parts[3].upper()
-        pid = parts[4]
-
-        if state == "LISTENING" and local_address.endswith(f":{port}") and pid.isdigit():
-            return int(pid)
-
-    return None
+    return {"pid": pid, "instance_token": instance_token}
 
 
-def get_process_command_line(pid):
-    if os.name != "nt":
-        return ""
-
-    command = (
-        "Get-CimInstance Win32_Process "
-        f"-Filter \"ProcessId = {pid}\" | "
-        "Select-Object -ExpandProperty CommandLine"
-    )
-
-    try:
-        return subprocess.check_output(
-            ["powershell", "-NoProfile", "-Command", command],
-            text=True,
-            stderr=subprocess.DEVNULL,
-            creationflags=subprocess.CREATE_NO_WINDOW,
-        ).strip()
-    except (OSError, subprocess.SubprocessError):
-        return ""
-
-
-def is_project_server_process(pid):
-    command_line = get_process_command_line(pid).lower()
-    project_dir = str(PROJECT_DIR).lower()
-
-    if project_dir not in command_line:
+def server_identity_matches(url, identity):
+    if not identity:
         return False
 
-    return "run_prod.py" in command_line or "main.py" in command_line
+    try:
+        with urllib.request.urlopen(f"{url}/health", timeout=0.5) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except (OSError, ValueError, urllib.error.URLError, json.JSONDecodeError):
+        return False
 
-
-def terminate_process_tree(pid):
-    if os.name == "nt":
-        subprocess.run(
-            ["taskkill", "/PID", str(pid), "/T", "/F"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            creationflags=subprocess.CREATE_NO_WINDOW,
-            check=False,
-        )
-        return
-
-    os.kill(pid, 15)
-
-
-def get_project_server_pids():
-    if os.name != "nt":
-        return []
-
-    command = (
-        "Get-CimInstance Win32_Process | "
-        "Where-Object { $_.CommandLine } | "
-        "ForEach-Object { \"$($_.ProcessId)|$($_.CommandLine)\" }"
+    return (
+        payload.get("application") == "controle-de-acesso-controlid"
+        and payload.get("instance_token") == identity["instance_token"]
     )
 
+
+def terminate_server(identity):
+    if not identity:
+        return False
+
     try:
-        output = subprocess.check_output(
-            ["powershell", "-NoProfile", "-Command", command],
-            text=True,
-            stderr=subprocess.DEVNULL,
-            creationflags=subprocess.CREATE_NO_WINDOW,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return []
+        os.kill(identity["pid"], signal.SIGTERM)
+    except (OSError, ProcessLookupError):
+        return False
 
-    project_dir = str(PROJECT_DIR).lower()
-    pids = []
-    for line in output.splitlines():
-        if "|" not in line:
-            continue
+    try:
+        PID_PATH.unlink(missing_ok=True)
+    except OSError:
+        pass
 
-        pid_raw, command_line = line.split("|", 1)
-        command_line = command_line.lower()
-
-        if project_dir not in command_line:
-            continue
-        if "run_prod.py" not in command_line and "main.py" not in command_line:
-            continue
-        if pid_raw.strip().isdigit():
-            pids.append(int(pid_raw.strip()))
-
-    return pids
+    return True
 
 
 class LauncherApp:
@@ -190,8 +129,7 @@ class LauncherApp:
         self.port = int(self.config.get("FLASK_PORT", "5000"))
         self.url = f"http://localhost:{self.port}"
         self.process = None
-        self.external_pid = None
-        self.external_pid_is_project = False
+        self.external_identity = None
         self.log_file = None
 
         self.build_ui()
@@ -249,18 +187,15 @@ class LauncherApp:
                 self.log_file = None
             self.set_stopped_status()
         else:
-            listening_pid = get_listening_pid(self.port)
-            if listening_pid and listening_pid != self.external_pid:
-                self.external_pid = listening_pid
-                self.external_pid_is_project = is_project_server_process(listening_pid)
-
-            if listening_pid and self.external_pid_is_project:
+            identity = read_server_identity()
+            if is_port_open(self.port) and server_identity_matches(self.url, identity):
+                self.external_identity = identity
                 self.set_running_status()
-            elif listening_pid:
+            elif is_port_open(self.port):
+                self.external_identity = None
                 self.set_external_port_status()
             else:
-                self.external_pid = None
-                self.external_pid_is_project = False
+                self.external_identity = None
                 self.set_stopped_status()
 
         self.root.after(1500, self.refresh_status)
@@ -336,19 +271,18 @@ class LauncherApp:
                 self.process.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 self.process.kill()
-        elif self.external_pid and self.external_pid_is_project:
-            terminate_process_tree(self.external_pid)
+        elif self.external_identity and server_identity_matches(
+            self.url, self.external_identity
+        ):
+            terminate_server(self.external_identity)
             time.sleep(0.5)
-            for pid in get_project_server_pids():
-                terminate_process_tree(pid)
         else:
             self.process = None
             self.refresh_status()
             return
 
         self.process = None
-        self.external_pid = None
-        self.external_pid_is_project = False
+        self.external_identity = None
         if self.log_file:
             self.log_file.close()
             self.log_file = None
@@ -359,7 +293,8 @@ class LauncherApp:
 
     def on_close(self):
         if (self.process and self.process.poll() is None) or (
-            self.external_pid and self.external_pid_is_project
+            self.external_identity
+            and server_identity_matches(self.url, self.external_identity)
         ):
             should_stop = messagebox.askyesno(
                 APP_TITLE,

@@ -22,11 +22,12 @@ Thumbs.db
 # Logs
 *.log
 logs/
+server.pid
 
 # Build do executavel
 build/
 dist/
-release/*.exe
+release/
 public-release/
 *.spec
 

@@ -1,16 +1,16 @@
 @echo off
 cd /d "%~dp0"
 
-if exist "venv\Scripts\activate.bat" (
-    call "venv\Scripts\activate.bat"
-)
+set "PYTHON=python"
+if exist "venv\Scripts\python.exe" set "PYTHON=venv\Scripts\python.exe"
 
-python -m pip install pyinstaller
-python -m PyInstaller --noconfirm --onefile --windowed --name ControleDeAcesso launcher.py
+"%PYTHON%" -m pip install pyinstaller==6.21.0
+"%PYTHON%" -m PyInstaller --clean --noconfirm --onedir --windowed --name ControleDeAcesso --version-file version_info.txt launcher.py
 
+if exist "release\ControleDeAcesso" rmdir /S /Q "release\ControleDeAcesso"
 if not exist "release" mkdir "release"
-copy /Y "dist\ControleDeAcesso.exe" "release\ControleDeAcesso.exe"
+xcopy /E /I /Y "dist\ControleDeAcesso" "release\ControleDeAcesso" >nul
 
 echo.
-echo Executavel criado em: release\ControleDeAcesso.exe
-pause
+echo Launcher criado em: release\ControleDeAcesso\ControleDeAcesso.exe
+if not defined CI pause
